@@ -309,7 +309,7 @@ import hashlib
 class Compyuter(models.Model):
     seal_number = models.CharField(max_length=255, verbose_name='Номер пломбы', null=True, blank=True)
     departament = models.ForeignKey('Department', on_delete=models.CASCADE, verbose_name="Цех", null=True, blank=True)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, verbose_name="Отдел", null=True, blank=True)
+    # section = models.ForeignKey(Section, on_delete=models.CASCADE, verbose_name="Отдел", null=True, blank=True)
     user = models.CharField(max_length=255, verbose_name='Пользователь', null=True, blank=True)
     warehouse_manager = models.ForeignKey(WarehouseManager, on_delete=models.CASCADE, verbose_name='Зав. склада', null=True, blank=True)
     type_compyuter = models.ForeignKey(TypeCompyuter, on_delete=models.CASCADE, verbose_name='Тип орг.техники',
@@ -381,7 +381,7 @@ class Compyuter(models.Model):
                 box_size=10,
                 border=4,
             )
-            qr.add_data(f"http://192.168.2.72:5175/view-computer/{self.slug}")
+            qr.add_data(f"http://192.168.101.6:5175/view-computer/{self.slug}")
             qr.make(fit=True)
 
             # QR-kodni rasmga aylantirish

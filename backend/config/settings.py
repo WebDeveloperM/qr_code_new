@@ -153,7 +153,7 @@ CORS_ORIGIN_WHITELIST = (
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5175',
-    "http://192.168.2.72:5175"
+    "http://192.168.101.6:5175"
     # 'https://bnpz.uz',
 ]
 
