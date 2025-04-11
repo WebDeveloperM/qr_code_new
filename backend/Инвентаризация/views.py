@@ -211,7 +211,7 @@ class AddCompyuterWithJsonApiView(APIView):
                 ipadresss=data.get("ipadresss") or None,
                 mac_adress=data.get("mac_adress") or None,
                 seal_number = seal_number.strip() if seal_number else "",
-                slug = slugify(f"computers/{data.get("mac_adress")}"),
+                slug = slugify(f"computers/{data.get('mac_adress')}"),
                 type_compyuter=type_compyuter,
                 motherboard=motherboard,
                 motherboard_model=motherboard_model,
