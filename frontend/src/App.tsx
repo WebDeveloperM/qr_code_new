@@ -20,6 +20,8 @@ import 'antd/dist/reset.css';
 import { ToastContainer } from 'react-toastify';
 import PageCompyuter from "./pages/ViewCompyuter/PagaCompyuter.tsx";
 import EditCompyuterPage from "./pages/EditCompyuter/EditCompyuterPage.tsx";
+import 'primeicons/primeicons.css';
+
 
 
 function App() {

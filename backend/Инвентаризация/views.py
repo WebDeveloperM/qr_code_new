@@ -20,9 +20,10 @@ from datetime import datetime
 from simple_history.utils import update_change_reason
 from django.contrib.auth.models import User
 
-
 # Получаем текущее время и датуl
 now = datetime.now()
+
+
 class TexnologyApiView(APIView):
     # authentication_classes = [TokenAuthentication]
     # permission_classes = [IsAuthenticated]
@@ -51,10 +52,14 @@ class TexnologyApiView(APIView):
         type_webcamera = TypeWebCameraSerializer(TypeWebCamera.objects.all(), many=True).data
         model_webcam = ModelWebCameraSerializer(ModelWebCamera.objects.all(), many=True).data
         type_monitor = MonitorSerializer(Monitor.objects.all(), many=True).data
-        program_with_license_and_systemic = ProgramSerializer(Program.objects.filter(license_type='license', type='systemic'), many=True).data
-        program_with_license_and_additional = ProgramSerializer(Program.objects.filter(license_type='license', type='additional'), many=True).data
-        program_with_no_license_and_systemic = ProgramSerializer(Program.objects.filter(license_type='no-license', type='systemic'), many=True).data
-        program_with_no_license_and_additional = ProgramSerializer(Program.objects.filter(license_type='no-license', type='additional'), many=True).data
+        program_with_license_and_systemic = ProgramSerializer(
+            Program.objects.filter(license_type='license', type='systemic'), many=True).data
+        program_with_license_and_additional = ProgramSerializer(
+            Program.objects.filter(license_type='license', type='additional'), many=True).data
+        program_with_no_license_and_systemic = ProgramSerializer(
+            Program.objects.filter(license_type='no-license', type='systemic'), many=True).data
+        program_with_no_license_and_additional = ProgramSerializer(
+            Program.objects.filter(license_type='no-license', type='additional'), many=True).data
 
         data = {
             'departament': departament,
@@ -79,23 +84,63 @@ class TexnologyApiView(APIView):
             'model_webcam': model_webcam,
             'type_monitor': type_monitor,
             'program_with_license_and_systemic': program_with_license_and_systemic,
-            'program_with_license_and_additional':program_with_license_and_additional,
-            'program_with_no_license_and_systemic':program_with_no_license_and_systemic,
-            'program_with_no_license_and_additional':program_with_no_license_and_additional
+            'program_with_license_and_additional': program_with_license_and_additional,
+            'program_with_no_license_and_systemic': program_with_no_license_and_systemic,
+            'program_with_no_license_and_additional': program_with_no_license_and_additional
         }
 
         return Response(data)
 
 
 class CoreApiView(APIView):
-    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    @staticmethod
-    def get(request, *args, **kwargs):
-        compyuters = Compyuter.objects.all()
-        serializer = CompyuterSerializer(compyuters, many=True)
+    def get(self, request, *args, **kwargs):
+        department = request.GET.get('department')
+        section = request.GET.get('section')
+        user = request.GET.get('user')
+        type_compyuter = request.GET.get('type_compyuter')
+        ip = request.GET.get('ipadresss')
+
+        queryset = Compyuter.objects.all()
+
+        if department:
+            queryset = queryset.filter(departament__name__icontains=department)
+        if section:
+            queryset = queryset.filter(section__name__icontains=section)
+        if user:
+            queryset = queryset.filter(user__icontains=user)
+        if type_compyuter:
+            queryset = queryset.filter(type_compyuter__name__icontains=type_compyuter)
+        if ip:
+            queryset = queryset.filter(ipadresss__icontains=ip)
+
+        serializer = CompyuterSerializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class FilterOptionsAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        departments = Department.objects.all().values('id', 'name')
+        sections = Section.objects.all().values('id', 'name')
+        ip_addresses = (
+            Compyuter.objects
+            .exclude(ipadresss__isnull=True)
+            .exclude(ipadresss__exact='')
+            .values_list('ipadresss', flat=True)
+            .distinct()
+        )
+        type_compyuters = TypeCompyuter.objects.all().values('id', 'name')
+
+        data = {
+            'departments': list(departments),
+            'sections': list(sections),
+            'ip_addresses': list(ip_addresses),
+            'type_compyuters': list(type_compyuters),
+        }
+        return Response(data)
 
 
 class CompDetailApiView(APIView):
@@ -141,13 +186,16 @@ class InfoCompyuterApiView(APIView):
         all_compyuters = Compyuter.objects.all().count()
         all_worked_compyuters_count = Compyuter.objects.filter(isActive=True).count()
         all_noworked_compyuters_count = Compyuter.objects.filter(isActive=False).count()
-        all_compyuters_with_printer = Compyuter.objects.filter(printer__isnull=False).exclude(printer__name="Нет").distinct().count()
-        all_compyuters_with_scaner = Compyuter.objects.filter(scaner__isnull=False).exclude(scaner__name="Нет").distinct().count()
+        all_compyuters_with_printer = Compyuter.objects.filter(printer__isnull=False).exclude(
+            printer__name="Нет").distinct().count()
+        all_compyuters_with_scaner = Compyuter.objects.filter(scaner__isnull=False).exclude(
+            scaner__name="Нет").distinct().count()
         all_compyuters_with_mfo = Compyuter.objects.filter(mfo=True).distinct().count()
         all_compyuters_with_net = Compyuter.objects.filter(internet=True).distinct().count()
         all_compyuters_with_no_net = Compyuter.objects.filter(internet=False).distinct().count()
-        all_compyuters_with_webcam = Compyuter.objects.filter(type_webcamera__isnull=False).exclude(type_webcamera__name="Нет").distinct().count()
-      
+        all_compyuters_with_webcam = Compyuter.objects.filter(type_webcamera__isnull=False).exclude(
+            type_webcamera__name="Нет").distinct().count()
+
         info = {
             "all_compyuters_count": all_compyuters,
             "all_worked_compyuters_count": all_worked_compyuters_count,
@@ -175,7 +223,6 @@ class AddCompyuterApiView(APIView):
             update_change_reason(instance, f"Создано пользователем {request.user.username}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 
 from rest_framework.views import APIView
@@ -183,10 +230,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import *
 
+
 class AddCompyuterWithJsonApiView(APIView):
     def post(self, request):
         data = request.data
-        
+
         try:
             type_compyuter = TypeCompyuter.objects.get_or_create(name=data.get("type_compyuter"))[0]
             motherboard = Motherboard.objects.get_or_create(name=data.get("motherboard"))[0]
@@ -199,19 +247,20 @@ class AddCompyuterWithJsonApiView(APIView):
             RAM_type = RAMType.objects.get_or_create(name=data.get("RAM_type"))[0]
             ram_size = RAMSize.objects.get_or_create(name=data.get("RAMSize"))[0]
         except Exception as e:
-            return Response({"error": f"ForeignKey obyektlarini yaratishda xatolik: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"ForeignKey obyektlarini yaratishda xatolik: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
             internet = data.get("Internet")
             print(internet, "444444")
             seal_number = data.get("seal_number")
-            
+
             comp = Compyuter.objects.create(
                 user=data.get("user") or None,
                 ipadresss=data.get("ipadresss") or None,
                 mac_adress=data.get("mac_adress") or None,
-                seal_number = seal_number.strip() if seal_number else "",
-                slug = slugify(f"computers/{data.get('mac_adress')}"),
+                seal_number=seal_number.strip() if seal_number else "",
+                slug=slugify(f"computers/{data.get('mac_adress')}"),
                 type_compyuter=type_compyuter,
                 motherboard=motherboard,
                 motherboard_model=motherboard_model,
@@ -223,12 +272,15 @@ class AddCompyuterWithJsonApiView(APIView):
                 RAM_type=RAM_type,
                 RAMSize=ram_size,
                 internet=internet,
-                departament=Department.objects.filter(name=data.get("departament")).first() if data.get("departament") else None,
-                warehouse_manager=WarehouseManager.objects.filter(name=data.get("warehouse_manager")).first() if data.get("warehouse_manager") else None,
+                departament=Department.objects.filter(name=data.get("departament")).first() if data.get(
+                    "departament") else None,
+                warehouse_manager=WarehouseManager.objects.filter(
+                    name=data.get("warehouse_manager")).first() if data.get("warehouse_manager") else None,
                 GPU=GPU.objects.filter(name=data.get("GPU")).first() if data.get("GPU") else None,
             )
         except Exception as e:
-            return Response({"error": f"Kompyuter obyektini yaratishda xatolik: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"Kompyuter obyektini yaratishda xatolik: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # try:
         #     if data.get("type_webcamera"):
@@ -280,15 +332,18 @@ class AddCompyuterWithJsonApiView(APIView):
                         comp.type_monitor.add(obj)
 
         except Exception as e:
-            return Response({"error": f"ManyToMany ma'lumotlarni qo'shishda xatolik: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"ManyToMany ma'lumotlarni qo'shishda xatolik: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            return Response({"error": f"ManyToMany ma'lumotlarni qo'shishda xatolik: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"ManyToMany ma'lumotlarni qo'shishda xatolik: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
             comp.save()
         except Exception as e:
-            return Response({"error": f"Compyuter obyektini saqlashda xatolik: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"Compyuter obyektini saqlashda xatolik: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST)
         serializer = CompyuterSerializer(comp)
         print(serializer.data, "11111111111111111")
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -299,7 +354,6 @@ def get_or_create_model(model, field_name, value):
         return None
     obj, created = model.objects.get_or_create(**{field_name: value})
     return obj
-
 
 
 class GetTexnologyFromAgent(APIView):
@@ -366,10 +420,10 @@ class GetTexnologyFromAgent(APIView):
                 comp._history_user = admin_user
                 # Set as updated user
                 comp.updatedUser = admin_user
-                
+
             # Set appropriate change reason
             update_change_reason(comp, f"Автоматическое обновление через агент")
-            
+
             comp.save()
             # ManyToMany fields (clear and add new)
             m2m_fields = {
@@ -389,8 +443,6 @@ class GetTexnologyFromAgent(APIView):
                     objs = [model.objects.get_or_create(name=value)[0] for value in values]
                     getattr(comp, field).set(objs)
 
-          
-
         message = "Update successful" if not created else "OK"
         return Response({"message": message, "created": created})
 
@@ -401,11 +453,11 @@ class FilterDataByIPApiView(APIView):
 
     @staticmethod
     def post(request, *args, **kwargs):
-       
+
         key = request.data.get('key')
 
         if key == "Все компьютеры":
-     
+
             computers = Compyuter.objects.all().distinct()
 
         elif key == "Рабочие компьютеры":
@@ -417,7 +469,7 @@ class FilterDataByIPApiView(APIView):
             computers = Compyuter.objects.filter(isActive=False).distinct()
 
         elif key == "Принтеры":
-  
+
             computers = Compyuter.objects.filter(printer__isnull=False).exclude(printer__name="Нет").distinct()
 
         elif key == "Сканеры":
@@ -433,15 +485,16 @@ class FilterDataByIPApiView(APIView):
             computers = Compyuter.objects.filter(internet=False).distinct()
 
         elif key == "Веб-камеры":
-           
-            computers = Compyuter.objects.filter(type_webcamera__isnull=False).exclude(type_webcamera__name="Нет").distinct()
+
+            computers = Compyuter.objects.filter(type_webcamera__isnull=False).exclude(
+                type_webcamera__name="Нет").distinct()
 
         else:
-     
+
             return Response({"error": "Invalid key value"}, status=400)
 
         serializer = CompyuterSerializer(computers, many=True)
-    
+
         return Response(serializer.data)
 
 
@@ -482,11 +535,10 @@ def upload_excel(request):
     return render(request, "upload.html")
 
 
-
 # class GetComputerWithMac(APIView):
 #     authentication_classes = [TokenAuthentication]
 #     permission_classes = [IsAuthenticated]
-    
+
 #     @staticmethod
 #     def get(request, *args, **kwargs):
 #         mac = getmac.get_mac_address()
@@ -494,7 +546,7 @@ def upload_excel(request):
 #         print(mac, "1111111111")
 #         serializer = CompyuterSerializer(computer, many=True)
 #         return Response(serializer.data, status=status.HTTP_200_OK)
-            
+
 class GetComputerWithMac(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -503,7 +555,6 @@ class GetComputerWithMac(APIView):
     def get(request, *args, **kwargs):
         # Foydalanuvchi IP manzilini olish
         ip = request.META.get('REMOTE_ADDR')
-       
 
         # IP orqali MAC olish (Linux yoki Windows uchun)
         import subprocess
@@ -519,7 +570,6 @@ class GetComputerWithMac(APIView):
         else:
             result = subprocess.run(["arp", "-n", ip], capture_output=True, text=True)
             mac = result.stdout.split()[3] if result.stdout else None
-
 
         # Kompyuter qidirish
         computer = Compyuter.objects.filter(mac_adress=mac)

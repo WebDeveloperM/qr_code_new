@@ -3,6 +3,7 @@ from .models import *
 from simple_history.admin import SimpleHistoryAdmin
 from django.utils.translation import gettext_lazy as _
 from simple_history.utils import update_change_reason
+
 # Register your models here.
 
 
@@ -10,6 +11,7 @@ admin.site.register(Department)
 # admin.site.register(ComputerAgent)
 admin.site.register(ProgramLicense)
 admin.site.register(Section)
+
 
 # @admin.register(Compyuter)
 # class CompyuterAdmin(admin.ModelAdmin):
@@ -86,14 +88,16 @@ class HistoricalCompyuterAdmin(admin.ModelAdmin):
     search_fields = ('user', 'seal_number', 'history_change_reason')
     readonly_fields = ('history_id', 'history_date', 'history_user', 'history_type')
 
+
 admin.site.register(Compyuter.history.model, HistoricalCompyuterAdmin)
+
 
 class CompyuterAdmin(SimpleHistoryAdmin):
     list_display = (
         'user',
         'seal_number',
         'departament',
-        # 'section',
+        'section',
         'warehouse_manager',
         'type_compyuter',
         'motherboard',
@@ -117,12 +121,12 @@ class CompyuterAdmin(SimpleHistoryAdmin):
         'updatedAt',
         'isActive',
     )
-    
+
     fields = (
         'user',
         'seal_number',
         'departament',
-        # 'section',
+        'section',
         'warehouse_manager',
         'type_compyuter',
         'motherboard',
@@ -146,25 +150,25 @@ class CompyuterAdmin(SimpleHistoryAdmin):
         'type_monitor',
         'internet',
         'slug',
-        'isActive', 
+        'isActive',
     )
     search_fields = ('seal_number', 'user', 'warehouse_manager__name')
     history_list_display = ['history_date', 'history_user']
-    
+
     def save_model(self, request, obj, form, change):
         if not obj.addedUser:
             obj.addedUser = request.user
         obj.updatedUser = request.user
-        
+
         if change:
             obj._change_reason = f"Обновлено пользователем {request.user.username}"
         else:
             obj._change_reason = f"Создано пользователем {request.user.username}"
-            
+
         super().save_model(request, obj, form, change)
 
-admin.site.register(Compyuter, CompyuterAdmin)
 
+admin.site.register(Compyuter, CompyuterAdmin)
 
 admin.site.register(TypeCompyuter)
 admin.site.register(WarehouseManager)

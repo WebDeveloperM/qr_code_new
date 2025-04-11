@@ -17,6 +17,6 @@ urlpatterns = [
     path("filter-data/", FilterDataByIPApiView.as_view()),
     path("register_computer/", register_computer),
     path('get-mac/', GetComputerWithMac.as_view(), name='get_mac'),
-
+    path('filter-options/', FilterOptionsAPIView.as_view(), name='filter-options'),
 
 ]

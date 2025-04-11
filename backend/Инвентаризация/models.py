@@ -27,6 +27,7 @@ class Department(models.Model):
         verbose_name = 'Цех '
         verbose_name_plural = 'Цех'
 
+
 class Section(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, verbose_name='Название цеха')
     name = models.CharField(max_length=255, verbose_name='Название отдела')
@@ -35,8 +36,9 @@ class Section(models.Model):
         return self.name
 
     class Meta:
-        verbose_name = 'Отдел '
+        verbose_name = 'Отдел'
         verbose_name_plural = 'Отдел'
+        db_table = 'Инвентаризация_section'
 
 
 class WarehouseManager(models.Model):
@@ -304,47 +306,58 @@ class Program(models.Model):
         verbose_name = 'Программа '
         verbose_name_plural = 'Программа'
 
+
 import hashlib
+
 
 class Compyuter(models.Model):
     seal_number = models.CharField(max_length=255, verbose_name='Номер пломбы', null=True, blank=True)
     departament = models.ForeignKey('Department', on_delete=models.CASCADE, verbose_name="Цех", null=True, blank=True)
-    # section = models.ForeignKey(Section, on_delete=models.CASCADE, verbose_name="Отдел", null=True, blank=True)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, verbose_name="Отдел", null=True, blank=True)
     user = models.CharField(max_length=255, verbose_name='Пользователь', null=True, blank=True)
-    warehouse_manager = models.ForeignKey(WarehouseManager, on_delete=models.CASCADE, verbose_name='Зав. склада', null=True, blank=True)
+    warehouse_manager = models.ForeignKey(WarehouseManager, on_delete=models.CASCADE, verbose_name='Зав. склада',
+                                          null=True, blank=True)
     type_compyuter = models.ForeignKey(TypeCompyuter, on_delete=models.CASCADE, verbose_name='Тип орг.техники',
                                        default=None, null=True, blank=True)
     motherboard = models.ForeignKey(Motherboard, on_delete=models.CASCADE, verbose_name='Производитель МП',
                                     default=None, null=True, blank=True)
     motherboard_model = models.ForeignKey(MotherboardModel, on_delete=models.CASCADE, verbose_name='Модель МП',
                                           default=None, null=True, blank=True)
-    CPU = models.ForeignKey(CPU, on_delete=models.CASCADE, verbose_name='Процессор', default=None, null=True, blank=True)
+    CPU = models.ForeignKey(CPU, on_delete=models.CASCADE, verbose_name='Процессор', default=None, null=True,
+                            blank=True)
     generation = models.ForeignKey(Generation, on_delete=models.CASCADE, verbose_name='Поколение процессора',
                                    default=None, null=True, blank=True)
-    frequency = models.ForeignKey(Frequency, on_delete=models.CASCADE, verbose_name='Частота процессора', default=None, null=True, blank=True)
+    frequency = models.ForeignKey(Frequency, on_delete=models.CASCADE, verbose_name='Частота процессора', default=None,
+                                  null=True, blank=True)
     HDD = models.ForeignKey(HDD, on_delete=models.CASCADE, verbose_name='Диск  HDD', null=True, blank=True)
     SSD = models.ForeignKey(SSD, on_delete=models.CASCADE, verbose_name='Диск  SSD', null=True, blank=True)
     disk_type = models.ForeignKey(DiskType, on_delete=models.CASCADE, verbose_name='Тип диска', null=True, blank=True)
-    RAM_type = models.ForeignKey(RAMType, on_delete=models.CASCADE, verbose_name='Тип оперативки', null=True, blank=True)
-    RAMSize = models.ForeignKey(RAMSize, on_delete=models.CASCADE, verbose_name='Размер оперативной памяти', null=True, blank=True)
-    GPU = models.ForeignKey(GPU, on_delete=models.CASCADE, verbose_name='Видеокарта', default=None, null=True, blank=True)
+    RAM_type = models.ForeignKey(RAMType, on_delete=models.CASCADE, verbose_name='Тип оперативки', null=True,
+                                 blank=True)
+    RAMSize = models.ForeignKey(RAMSize, on_delete=models.CASCADE, verbose_name='Размер оперативной памяти', null=True,
+                                blank=True)
+    GPU = models.ForeignKey(GPU, on_delete=models.CASCADE, verbose_name='Видеокарта', default=None, null=True,
+                            blank=True)
     ipadresss = models.CharField(max_length=255, verbose_name='IPv4 адрес', null=True, blank=True)
     mac_adress = models.CharField(max_length=255, verbose_name='Физический(MAC) адрес', null=True, blank=True)
     printer = models.ManyToManyField(Printer, verbose_name='Принтеры', related_name="printer", null=True, blank=True)
     scaner = models.ManyToManyField(Scaner, verbose_name='Сканеры', related_name="scaner", null=True, blank=True)
-    mfo = models.ManyToManyField(MFO, verbose_name='МФУ', related_name="mfo", null=True, blank=True) 
+    mfo = models.ManyToManyField(MFO, verbose_name='МФУ', related_name="mfo", null=True, blank=True)
     type_webcamera = models.ManyToManyField(TypeWebCamera, related_name="typeCamera",
                                             verbose_name='Тип вебкамера', null=True, blank=True)
-    
+
     model_webcam = models.ManyToManyField(ModelWebCamera, verbose_name='Модель вебкамеры', null=True, blank=True)
-    type_monitor = models.ManyToManyField(Monitor, related_name="typeMonitor", verbose_name='Тип Монитора', null=True, blank=True)
+    type_monitor = models.ManyToManyField(Monitor, related_name="typeMonitor", verbose_name='Тип Монитора', null=True,
+                                          blank=True)
     program = models.ManyToManyField(Program, verbose_name='Программы', null=True, blank=True)
-    qr_image = models.ImageField(upload_to='qr_codes/', default='qr_codes/default.png', verbose_name='QR-код', null=True, blank=True)
+    qr_image = models.ImageField(upload_to='qr_codes/', default='qr_codes/default.png', verbose_name='QR-код',
+                                 null=True, blank=True)
     bg_image = models.ImageField(default="back.jpg", verbose_name='QR-код', null=True, blank=True)
-    internet = models.BooleanField(default=False,  verbose_name="Интернет", null=True, blank=True) 
+    internet = models.BooleanField(default=False, verbose_name="Интернет", null=True, blank=True)
     joinDate = models.DateTimeField(auto_now=True, null=True, blank=True, verbose_name="Дате")
     addedUser = models.ForeignKey(User, on_delete=models.SET_NULL, verbose_name="Сотрудник", null=True, blank=True)
-    updatedUser = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="updated_computers", verbose_name="Изменил", null=True, blank=True)
+    updatedUser = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="updated_computers",
+                                    verbose_name="Изменил", null=True, blank=True)
     updatedAt = models.DateTimeField(auto_now=True, verbose_name="Дата изменения", null=True, blank=True)
     slug = models.SlugField(unique=True, blank=True)
     isActive = models.BooleanField(default=True)
@@ -355,7 +368,6 @@ class Compyuter(models.Model):
 
     def __str__(self):
         return self.user
-
 
     def save(self, *args, **kwargs):
         user = CurrentUserMiddleware.get_current_user()
@@ -397,8 +409,6 @@ class Compyuter(models.Model):
     class Meta:
         verbose_name = 'Компьютеры '
         verbose_name_plural = 'Компьютеры'
-
-
 
 
 # class ComputerAgent(models.Model):
