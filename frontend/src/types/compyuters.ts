@@ -14,7 +14,7 @@ export type Compyuter = {
     };
     section: {
         id: number,
-        department: number,
+        department: string,
         name: string,
     };
     warehouse_manager: {

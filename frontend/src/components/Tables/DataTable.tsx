@@ -294,7 +294,7 @@ export default function ComputerTable({
     </div>
   );
 
-   const sectionHeader = (
+  const sectionHeader = (
     <div className="flex items-center justify-center">
       <span>Отдел</span>
       {filters['section.name'] && filters['section.name'].value && (
@@ -326,7 +326,7 @@ export default function ComputerTable({
     </div>
   );
 
-const typeHeader = (
+  const typeHeader = (
     <div className="flex items-center justify-center">
       <span>Тип орг.техники</span>
       {filters['type_compyuter.name'] && filters['type_compyuter.name'].value && (
@@ -368,10 +368,10 @@ const typeHeader = (
           onClick={() => clearFilter('ipadresss')}
         />
       )}
-      {/* <i
+      <i
         className="pi pi-filter ml-2 cursor-pointer text-gray-700"
         onClick={(e) => (ipOverlay.current as any)?.toggle(e)}
-      /> */}
+      />
       {/* <OverlayPanel ref={ipOverlay} className={overlayClassName} appendTo={document.body}>
         {filterOptions.ip_addresses.length === 0 ? (
           <div className="text-gray-500">Нет данных</div>
@@ -437,7 +437,7 @@ const typeHeader = (
           'section.name',
           'user',
           'type_compyuter.name',
-          // 'ipadresss',
+          'ipadresss',
         ]}
         rowClassName={() => 'border border-gray-300'}
         className="p-3 table-border"

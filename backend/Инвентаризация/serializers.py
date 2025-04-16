@@ -8,7 +8,16 @@ class DepartmentSerializer(serializers.ModelSerializer):
         model = Department
         fields = "__all__"
 
+class DepartmentSerializerForSection(serializers.ModelSerializer):
+    name = serializers.CharField()
+  
+    class Meta:
+        model = Department
+        fields = ['name']
+  
 class SectionSerializer(serializers.ModelSerializer):
+    department = DepartmentSerializerForSection()
+
     class Meta:
         model = Section
         fields = "__all__"
