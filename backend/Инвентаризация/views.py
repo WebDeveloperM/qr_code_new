@@ -190,12 +190,12 @@ class InfoCompyuterApiView(APIView):
             printer__name="Нет").distinct().count()
         all_compyuters_with_scaner = Compyuter.objects.filter(scaner__isnull=False).exclude(
             scaner__name="Нет").distinct().count()
-        all_compyuters_with_mfo = Compyuter.objects.filter(mfo=True).distinct().count()
+        all_compyuters_with_mfo = Compyuter.objects.filter(mfo__isnull=False).exclude(mfo__name="Нет").distinct().count()
         all_compyuters_with_net = Compyuter.objects.filter(internet=True).distinct().count()
         all_compyuters_with_no_net = Compyuter.objects.filter(internet=False).distinct().count()
         all_compyuters_with_webcam = Compyuter.objects.filter(type_webcamera__isnull=False).exclude(
             type_webcamera__name="Нет").distinct().count()
-
+        print(all_compyuters_with_mfo, "1111111111")
         info = {
             "all_compyuters_count": all_compyuters,
             "all_worked_compyuters_count": all_worked_compyuters_count,
@@ -476,7 +476,7 @@ class FilterDataByIPApiView(APIView):
             computers = Compyuter.objects.filter(scaner__isnull=False).exclude(scaner__name="Нет").distinct()
 
         elif key == "МФУ":
-            computers = Compyuter.objects.filter(mfo=True).distinct()
+            computers = Compyuter.objects.filter(mfo__isnull=False).exclude(mfo__name="Нет").distinct()
 
         elif key == "Интернет":
             computers = Compyuter.objects.filter(internet=True).distinct()
