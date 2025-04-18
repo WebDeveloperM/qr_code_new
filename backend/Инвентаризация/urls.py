@@ -19,4 +19,9 @@ urlpatterns = [
     path('get-mac/', GetComputerWithMac.as_view(), name='get_mac'),
     path('filter-options/', FilterOptionsAPIView.as_view(), name='filter-options'),
 
+    path('sections/', SectionListCreateAPIView.as_view(), name='sections-list-create'),
+    path('printers/', PrinterListCreateAPIView.as_view(), name='printers-list-create'),
+    path('scaners/', ScanerListCreateAPIView.as_view(), name='scaners-list-create'),
+    path('mfos/', MFOListCreateAPIView.as_view(), name='mfos-list-create'),
+    path('monitors/', MonitorListCreateAPIView.as_view(), name='monitors-list-create'),
 ]

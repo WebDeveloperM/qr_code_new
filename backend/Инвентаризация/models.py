@@ -307,9 +307,6 @@ class Program(models.Model):
         verbose_name_plural = 'Программа'
 
 
-import hashlib
-
-
 class Compyuter(models.Model):
     seal_number = models.CharField(max_length=255, verbose_name='Номер пломбы', null=True, blank=True)
     departament = models.ForeignKey('Department', on_delete=models.CASCADE, verbose_name="Цех", null=True, blank=True)

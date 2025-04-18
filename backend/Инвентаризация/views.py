@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from rest_framework import status
+from rest_framework import status, generics
 from .models import *
 from .serializers import *
 from rest_framework.authentication import TokenAuthentication
@@ -19,6 +19,7 @@ from django.template.defaultfilters import slugify
 from datetime import datetime
 from simple_history.utils import update_change_reason
 from django.contrib.auth.models import User
+from django.db.models import Case, When, Value, IntegerField
 
 # Получаем текущее время и датуl
 now = datetime.now()
@@ -31,8 +32,15 @@ class TexnologyApiView(APIView):
 
     @staticmethod
     def get(request, *args, **kwargs):
+        params_departament = request.query_params.get('departament')
         departament = DepartmentSerializer(Department.objects.all(), many=True).data
-        section = SectionSerializer(Section.objects.all(), many=True).data
+        if params_departament:
+            section = SectionSimpleSerializer(
+                Section.objects.filter(department_id=params_departament),
+                many=True
+            ).data
+        else:
+            section = SectionSimpleSerializer(Section.objects.all(), many=True).data
         warehouse_manager = WarehouseManagerSerializer(WarehouseManager.objects.all(), many=True).data
         type_compyuter = TypeCompyuterSerializer(TypeCompyuter.objects.all(), many=True).data
         motherboard = MotherboardModelSerializer(Motherboard.objects.all(), many=True).data
@@ -115,6 +123,22 @@ class CoreApiView(APIView):
         if ip:
             queryset = queryset.filter(ipadresss__icontains=ip)
 
+        queryset = queryset.annotate(
+            has_dept=Case(
+                When(departament__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+            has_section=Case(
+                When(section__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+        ).order_by(
+            '-has_dept',
+            '-has_section',
+            'id'
+        )
         serializer = CompyuterSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -190,7 +214,8 @@ class InfoCompyuterApiView(APIView):
             printer__name="Нет").distinct().count()
         all_compyuters_with_scaner = Compyuter.objects.filter(scaner__isnull=False).exclude(
             scaner__name="Нет").distinct().count()
-        all_compyuters_with_mfo = Compyuter.objects.filter(mfo__isnull=False).exclude(mfo__name="Нет").distinct().count()
+        all_compyuters_with_mfo = Compyuter.objects.filter(mfo__isnull=False).exclude(
+            mfo__name="Нет").distinct().count()
         all_compyuters_with_net = Compyuter.objects.filter(internet=True).distinct().count()
         all_compyuters_with_no_net = Compyuter.objects.filter(internet=False).distinct().count()
         all_compyuters_with_webcam = Compyuter.objects.filter(type_webcamera__isnull=False).exclude(
@@ -575,3 +600,28 @@ class GetComputerWithMac(APIView):
         computer = Compyuter.objects.filter(mac_adress=mac)
         serializer = CompyuterSerializer(computer, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SectionListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Section.objects.all()
+    serializer_class = SectionCreateSerializer
+
+
+class PrinterListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Printer.objects.all()
+    serializer_class = PrinterSerializer
+
+
+class ScanerListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Scaner.objects.all()
+    serializer_class = ScanerSerializer
+
+
+class MFOListCreateAPIView(generics.ListCreateAPIView):
+    queryset = MFO.objects.all()
+    serializer_class = MfoSerializer
+
+
+class MonitorListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Monitor.objects.all()
+    serializer_class = MonitorSerializer

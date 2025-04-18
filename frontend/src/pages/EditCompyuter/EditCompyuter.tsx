@@ -16,13 +16,15 @@ import { isAuthenticated } from '../../utils/auth';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import EditCompyuterSeleced from '../../components/SelectedGroup/EditCompyuterSeleced';
-import { log } from 'console';
+import { AddItemModal } from '../../components/Modal/AddItemModal.tsx';
+import { addItemConfig } from '../../configs/addItemConfig.ts';
 
 type Props = {
   program: number[] | null;
 };
 
 const EditCompyuter = forwardRef(({ program }: Props, ref) => {
+  const [modalModel, setModalModel] = useState<string | null>(null);
   const inputSealNumberRef = useRef<HTMLInputElement>(null);
   const inputUserRef = useRef<HTMLInputElement>(null);
   const inputIPAddresRef = useRef<HTMLInputElement>(null);
@@ -37,6 +39,7 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
     error?: string;
   }>({});
   const [departament, setSelectedDepartment] = useState<number | null>(null);
+  console.log(departament, 'departament');
   const [user, setUser] = useState<{ value?: string; error?: string }>({
     value: compyuterDetailData?.user,
     error: '',
@@ -44,9 +47,7 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
   const [warehouse_manager, setSelectedWarehouseManagerId] = useState<
     number | null
   >(null);
-  const [section, setSelectedSectionId] = useState<
-    number | null
-  >(null);
+  const [section, setSelectedSectionId] = useState<number | null>(null);
   const [type_compyuter, setSelectedTypeCompyuterId] = useState<number | null>(
     null,
   );
@@ -77,9 +78,7 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
   const [type_webcamera, setTypeWebcameraId] = useState<number[] | null>(null);
   const [model_webcam, setModelWebcamId] = useState<number[] | null>(null);
   const [type_monitor, setTypeMonitorId] = useState<number[] | null>(null);
-  console.log(mfo);
-  console.log(scaner, "5555555");
-  
+
   const [isActive, setIsActive] = useState(compyuterDetailData?.isActive);
   const [internet, setInternet] = useState(compyuterDetailData?.internet);
 
@@ -87,23 +86,28 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
   const { slug } = useParams();
   const navigate = useNavigate();
 
+  const refreshData = () => {
+    axioss
+      .get(`${BASE_URL}/all_texnology/`)
+      .then((resp) => setData(resp.data))
+      .catch((err) => console.error(err));
+  };
+
   useEffect(() => {
     if (!token) return;
 
     axioss
       .get(`${BASE_URL}/all_compyuters/`)
-      .then((response) => {
-        setCompyuterData(response.data);
-      })
+      .then((resp) => setCompyuterData(resp.data))
       .catch((err) => console.log(err));
 
     axioss
-      .get(`${BASE_URL}/all_texnology/`)
-      .then((response) => {
-        setData(response.data);
+      .get(`${BASE_URL}/all_texnology/`, {
+        params: departament != null ? { departament } : {},
       })
+      .then((resp) => setData(resp.data))
       .catch((err) => console.log(err));
-  }, []);
+  }, [token, departament]);
 
   useEffect(() => {
     if (!slug) return;
@@ -143,9 +147,9 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
     //   return
     // }
     if (!inputUserRef.current?.value) {
-      setUser({ error: erroMessage })
-      toast.warning("Существует обязательное поле.")
-      return
+      setUser({ error: erroMessage });
+      toast.warning('Существует обязательное поле.');
+      return;
     }
     // if (!inputIPAddresRef.current?.value) {
     //   setIpAddressId({ error: erroMessage })
@@ -205,13 +209,11 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
         else toast.error('Произошла ошибка.');
       });
   };
-  console.log(compyuterDetailData)
-
+  console.log(compyuterDetailData);
 
   useImperativeHandle(ref, () => ({
     submit: handlarData,
   }));
-
 
   if (!isAuthenticated()) {
     return <Navigate to="/auth/signin" />;
@@ -240,9 +242,7 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                           label="Тип орг.техники"
                           selectData={data.type_compyuter}
                           selectedTexnologyId={setSelectedTypeCompyuterId}
-                          selectedIdComp={
-                            compyuterDetailData?.type_compyuter
-                          }
+                          selectedIdComp={compyuterDetailData?.type_compyuter}
                           isSubmitted={isSubmitted}
                         />
                       )}
@@ -376,16 +376,21 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                   </div>
                   <h1 className=" py-4 font-semibold ">Монитор</h1>
                   <div className="grid sm:grid-cols-12 gap-4 border-b pb-5 ">
-                    <div className="col-span-3">
-                      {data && (
-                        <MultySelectTexnology
-                          label="Тип Монитора"
-                          selectData={data.type_monitor}
-                          selectedTexnologyId={setTypeMonitorId}
-                          selectedIdComp={compyuterDetailData?.type_monitor}
-                          isSubmitted={isSubmitted}
-                        />
-                      )}
+                    <div className="col-span-3 relative">
+                      <MultySelectTexnology
+                        label="Тип Монитора"
+                        selectData={data.type_monitor}
+                        selectedTexnologyId={setTypeMonitorId}
+                        selectedIdComp={compyuterDetailData?.type_monitor}
+                        isSubmitted={isSubmitted}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setModalModel('monitor')}
+                        className="absolute top-8 right-2 p-1 hover:bg-gray-200 rounded"
+                      >
+                        <span className="text-xl mr-4">＋</span>
+                      </button>
                     </div>
                   </div>
 
@@ -393,38 +398,53 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                     Периферийные устройства
                   </h1>
                   <div className="grid sm:grid-cols-12 gap-4 border-b pb-5">
-                    <div className="col-span-3">
-                      {data && (
-                        <MultySelectTexnology
-                          label="Принтер"
-                          selectData={data.printer}
-                          selectedTexnologyId={setPrinterId}
-                          selectedIdComp={compyuterDetailData?.printer}
-                          isSubmitted={isSubmitted}
-                        />
-                      )}
+                    <div className="col-span-3 relative">
+                      <MultySelectTexnology
+                        label="Принтер"
+                        selectData={data.printer}
+                        selectedTexnologyId={setPrinterId}
+                        selectedIdComp={compyuterDetailData?.printer}
+                        isSubmitted={isSubmitted}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setModalModel('printer')}
+                        className="absolute top-8 right-2 p-1 hover:bg-gray-200 rounded"
+                      >
+                        <span className="text-xl mr-4">＋</span>
+                      </button>
                     </div>
-                    <div className="col-span-3">
-                      {data && (
-                        <MultySelectTexnology
-                          label="Сканер"
-                          selectData={data.scaner}
-                          selectedTexnologyId={setScanerId}
-                          selectedIdComp={compyuterDetailData?.scaner}
-                          isSubmitted={isSubmitted}
-                        />
-                      )}
+                    <div className="col-span-3 relative">
+                      <MultySelectTexnology
+                        label="Сканер"
+                        selectData={data.scaner}
+                        selectedTexnologyId={setScanerId}
+                        selectedIdComp={compyuterDetailData?.scaner}
+                        isSubmitted={isSubmitted}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setModalModel('scaner')}
+                        className="absolute top-8 right-2 p-1 hover:bg-gray-200 rounded"
+                      >
+                        <span className="text-xl mr-4">＋</span>
+                      </button>
                     </div>
-                    <div className="col-span-3">
-                      {data && (
-                        <MultySelectTexnology
-                          label="МФУ"
-                          selectData={data.mfo}
-                          selectedTexnologyId={setMfoId}
-                          selectedIdComp={compyuterDetailData?.mfo}
-                          isSubmitted={isSubmitted}
-                        />
-                      )}
+                    <div className="col-span-3 relative">
+                      <MultySelectTexnology
+                        label="МФУ"
+                        selectData={data.mfo}
+                        selectedTexnologyId={setMfoId}
+                        selectedIdComp={compyuterDetailData?.mfo}
+                        isSubmitted={isSubmitted}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setModalModel('mfo')}
+                        className="absolute top-8 right-2 p-1 hover:bg-gray-200 rounded"
+                      >
+                        <span className="text-xl mr-4">＋</span>
+                      </button>
                     </div>
                     <div className="col-span-3">
                       {data && (
@@ -449,8 +469,6 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                         />
                       )}
                     </div>
-
-
                   </div>
 
                   <h1 className=" py-4 font-semibold ">Подразделение</h1>
@@ -468,18 +486,32 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                         />
                       )}
                     </div>
-                    <div className="col-span-3">
-                      {data && (
-                        <AddCompyuterSelecedTexnology
-                          label="Отдел"
-                          selectData={data.section}
-                          selectedTexnologyId={setSelectedSectionId}
-                          selectedIdComp={
-                            compyuterDetailData?.section
-                          }
-                          isSubmitted={isSubmitted}
-                        />
-                      )}
+                    {/*<div className="col-span-3">*/}
+                    {/*  {data && (*/}
+                    {/*    <AddCompyuterSelecedTexnology*/}
+                    {/*      label="Отдел"*/}
+                    {/*      selectData={data.section}*/}
+                    {/*      selectedTexnologyId={setSelectedSectionId}*/}
+                    {/*      selectedIdComp={compyuterDetailData?.section}*/}
+                    {/*      isSubmitted={isSubmitted}*/}
+                    {/*    />*/}
+                    {/*  )}*/}
+                    {/*</div>*/}
+                    <div className="col-span-3 relative">
+                      <AddCompyuterSelecedTexnology
+                        label="Отдел"
+                        selectData={data.section}
+                        selectedTexnologyId={setSelectedSectionId}
+                        selectedIdComp={compyuterDetailData?.section}
+                        isSubmitted={isSubmitted}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setModalModel('section')}
+                        className="absolute top-9 right-2 p-1 hover:bg-gray-200 rounded"
+                      >
+                        <span className="text-xl">＋</span>
+                      </button>
                     </div>
                     <div className="col-span-3">
                       <label className="mb-3 block text-black dark:text-white">
@@ -491,8 +523,9 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                         ref={inputUserRef}
                         placeholder="Пользователь"
                         onChange={(e) => setUser({ value: e.target.value })}
-                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${user.error ? 'border-red' : 'border-stroke'
-                          }`}
+                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                          user.error ? 'border-red' : 'border-stroke'
+                        }`}
                       />
                       {user.error && (
                         <p className="text-red-500 text-sm">{user.error}</p>
@@ -507,10 +540,11 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                         disabled
                         type="text"
                         placeholder="Руководитель подразделения"
-                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${isSubmitted && !departament
-                          ? 'border-red'
-                          : 'border-stroke'
-                          }`}
+                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                          isSubmitted && !departament
+                            ? 'border-red'
+                            : 'border-stroke'
+                        }`}
                       />
                       {isSubmitted && !departament ? (
                         <p className="text-red-500 text-sm">
@@ -549,8 +583,9 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                         }
                         // ref={inputSealNumberRef}
                         placeholder="Номер пломбы"
-                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${seal_number.error ? 'border-red' : 'border-stroke'
-                          }`}
+                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                          seal_number.error ? 'border-red' : 'border-stroke'
+                        }`}
                       />
                       {seal_number.error && (
                         <p className="text-red-500 text-sm">
@@ -571,8 +606,9 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                           setIpAddressId({ value: e.target.value })
                         }
                         placeholder="IPv4 адрес"
-                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${ipadresss.error ? 'border-red' : 'border-stroke'
-                          }`}
+                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                          ipadresss.error ? 'border-red' : 'border-stroke'
+                        }`}
                       />
                       {ipadresss.error && (
                         <p className="text-red-500 text-sm">
@@ -593,8 +629,9 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                           setMacAddressId({ value: e.target.value })
                         }
                         placeholder="Физический(MAC) адрес"
-                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${mac_adress.error ? 'border-red' : 'border-stroke'
-                          }`}
+                        className={`w-full rounded-md  bg-transparent py-2 px-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                          mac_adress.error ? 'border-red' : 'border-stroke'
+                        }`}
                       />
                       {mac_adress.error && (
                         <p className="text-red-500 text-sm">
@@ -610,8 +647,9 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                             disabled
                             type="checkbox"
                             defaultChecked={
-                              compyuterData ? compyuterDetailData?.internet : true
-
+                              compyuterData
+                                ? compyuterDetailData?.internet
+                                : true
                             }
                             onChange={(e) => setInternet(e.target.checked)}
                             className="w-4 h-4 border-gray-300 rounded focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-brand-500 dark:checked:border-brand-500 focus:ring-offset-0 focus:outline-none"
@@ -628,7 +666,6 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                           type="checkbox"
                           defaultChecked={
                             compyuterData ? compyuterDetailData?.isActive : true
-
                           }
                           onChange={(e) => setIsActive(e.target.checked)}
                           className="w-4 h-4 border-gray-300 rounded focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-brand-500 dark:checked:border-brand-500 focus:ring-offset-0 focus:outline-none"
@@ -638,8 +675,6 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
                     </div>
                   </div>
                 </form>
-
-
               </div>
             ) : (
               <div className="grid grid-cols-12">
@@ -660,6 +695,16 @@ const EditCompyuter = forwardRef(({ program }: Props, ref) => {
           </div>
         </div>
       </div>
+      <AddItemModal
+        modelKey={modalModel}
+        visible={!!modalModel}
+        allDepartments={data?.departament}
+        onClose={() => setModalModel(null)}
+        onCreated={() => {
+          refreshData();
+          setModalModel(null);
+        }}
+      />
     </>
   );
 });

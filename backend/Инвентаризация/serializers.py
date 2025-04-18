@@ -1,26 +1,49 @@
 # accounts/serializers.py
 from rest_framework import serializers
 from .models import *
-from simple_history.utils import update_change_reason
+import re
+
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = "__all__"
 
+
 class DepartmentSerializerForSection(serializers.ModelSerializer):
     name = serializers.CharField()
-  
+
     class Meta:
         model = Department
         fields = ['name']
-  
+
+
+class SectionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Section
+        fields = ["id", "department", "name"]
+
+
 class SectionSerializer(serializers.ModelSerializer):
     department = DepartmentSerializerForSection()
 
     class Meta:
         model = Section
         fields = "__all__"
+
+
+class SectionSimpleSerializer(serializers.ModelSerializer):
+    department = DepartmentSerializerForSection()
+    name = serializers.SerializerMethodField()
+
+    def get_name(self, obj):
+        match = re.search(r'(.+?[Цц]ех)', obj.department.name)
+        department_name = match.group(1).strip() if match else obj.department.name.strip()
+        return f"{department_name} ( {obj.name} )"
+
+    class Meta:
+        model = Section
+        fields = ["id", "department", "name"]
 
 
 class TypeCompyuterSerializer(serializers.ModelSerializer):
@@ -100,6 +123,7 @@ class ScanerSerializer(serializers.ModelSerializer):
         model = Scaner
         fields = "__all__"
 
+
 class MfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = MFO
@@ -137,60 +161,59 @@ class MonitorSerializer(serializers.ModelSerializer):
 
 
 class AddCompyuterSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Compyuter
         fields = (
-        'id',
-        'seal_number',
-        'departament',
-        'section',
-        'user',
-        'warehouse_manager',
-        'type_compyuter',
-        'motherboard',
-        'motherboard_model',
-        'CPU',
-        'generation',
-        'frequency',
-        'HDD',
-        'SSD',
-        'disk_type',
-        'RAM_type',
-        'RAMSize',
-        'GPU',
-        'ipadresss',
-        'mac_adress',
-        'printer',
-        'scaner',
-        'mfo',
-        'type_webcamera',
-        'model_webcam',
-        'program',
-        'qr_image',
-        'bg_image',
-        'type_monitor',
-        'internet',
-        'slug',
-        'isActive', 
-        'joinDate', 
-        'addedUser',
-        'updatedUser',
-        'updatedAt',
-        'slug',
-        'isActive',
-        # 'history',
-    )
-    
+            'id',
+            'seal_number',
+            'departament',
+            'section',
+            'user',
+            'warehouse_manager',
+            'type_compyuter',
+            'motherboard',
+            'motherboard_model',
+            'CPU',
+            'generation',
+            'frequency',
+            'HDD',
+            'SSD',
+            'disk_type',
+            'RAM_type',
+            'RAMSize',
+            'GPU',
+            'ipadresss',
+            'mac_adress',
+            'printer',
+            'scaner',
+            'mfo',
+            'type_webcamera',
+            'model_webcam',
+            'program',
+            'qr_image',
+            'bg_image',
+            'type_monitor',
+            'internet',
+            'slug',
+            'isActive',
+            'joinDate',
+            'addedUser',
+            'updatedUser',
+            'updatedAt',
+            'slug',
+            'isActive',
+            # 'history',
+        )
+
     def save(self, **kwargs):
         """Override save to set history_user from context"""
         request = self.context.get('request', None)
         instance = super().save(**kwargs)
-        
+
         # Set history user if request exists and user is authenticated
         if request and request.user and request.user.is_authenticated:
             instance._history_user = request.user
-            
+
         return instance
 
 
@@ -206,12 +229,9 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = "__all__"
-        
-
 
 
 class CompyuterSerializer(serializers.ModelSerializer):
-    
     departament = DepartmentSerializer()  # Use nested serializer
     section = SectionSerializer()  # Use nested serializer
     warehouse_manager = WarehouseManagerSerializer()  # Use nested serializer
@@ -234,7 +254,6 @@ class CompyuterSerializer(serializers.ModelSerializer):
     type_monitor = MonitorSerializer(many=True, read_only=True)
     isActive = serializers.BooleanField(read_only=True)
     mfo = MfoSerializer(many=True, read_only=True)
-
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -259,8 +278,6 @@ class CompyuterSerializer(serializers.ModelSerializer):
             Program.objects.filter(id__in=program_ids, license_type='no-license', type='additional'),
             many=True
         ).data
-
-
 
         return data
 
