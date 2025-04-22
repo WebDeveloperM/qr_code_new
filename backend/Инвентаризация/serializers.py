@@ -5,7 +5,6 @@ import re
 from django.utils.formats import date_format
 
 
-
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
@@ -285,26 +284,26 @@ class CompyuterSerializer(serializers.ModelSerializer):
         return data
 
     def get_changes(self, obj):
-        histories = obj.history.all().order_by('history_date')
-        if histories.count() < 2:
+        histories = obj.history.order_by('history_date')
+
+        target = None
+        for rec in histories:
+            if rec.history_user and rec.history_user.username != 'admin':
+                target = rec
+
+        if not target:
             return []
 
-        rec = histories[1]
+        date_str = date_format(
+            target.history_date,
+            format='d E Y г. H:i',
+            use_l10n=True
+        )
 
-        date_str = date_format(rec.history_date, format='d E Y г. H:i', use_l10n=True)
-
-        type_map = {
-            '+': 'Создано',
-            '~': 'Изменено',
-            '-': 'Удалено',
-        }
-        comment = type_map.get(rec.history_type, rec.history_type)
-
-        user = rec.history_user.username if rec.history_user else 'неизвестно'
+        user = target.history_user.username
 
         return [
             f"Дата/время: {date_str}",
-            f"Комментарий: {comment}",
             f"Изменено: {user}",
         ]
 
