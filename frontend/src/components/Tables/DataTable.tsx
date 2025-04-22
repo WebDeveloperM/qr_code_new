@@ -308,7 +308,11 @@ export default function ComputerTable({
         className="pi pi-filter ml-2 cursor-pointer text-gray-700"
         onClick={(e) => (sectionOverlay.current as any)?.toggle(e)}
       />
-      <OverlayPanel ref={sectionOverlay} className={overlayClassName} appendTo={document.body}>
+      <OverlayPanel
+        ref={sectionOverlay}
+        className={overlayClassName}
+        appendTo={document.body}
+      >
         {filterOptions.sections.length === 0 ? (
           <div className="text-gray-500">Нет данных</div>
         ) : (
@@ -329,18 +333,23 @@ export default function ComputerTable({
   const typeHeader = (
     <div className="flex items-center justify-center">
       <span>Тип орг.техники</span>
-      {filters['type_compyuter.name'] && filters['type_compyuter.name'].value && (
-        <i
-          className="pi pi-times-circle ml-2 cursor-pointer text-red-500"
-          title="Очистить"
-          onClick={() => clearFilter('type_compyuter.name')}
-        />
-      )}
+      {filters['type_compyuter.name'] &&
+        filters['type_compyuter.name'].value && (
+          <i
+            className="pi pi-times-circle ml-2 cursor-pointer text-red-500"
+            title="Очистить"
+            onClick={() => clearFilter('type_compyuter.name')}
+          />
+        )}
       <i
         className="pi pi-filter ml-2 cursor-pointer text-gray-700"
         onClick={(e) => (typeOverlay.current as any)?.toggle(e)}
       />
-      <OverlayPanel ref={typeOverlay} className={overlayClassName} appendTo={document.body}>
+      <OverlayPanel
+        ref={typeOverlay}
+        className={overlayClassName}
+        appendTo={document.body}
+      >
         {filterOptions.type_compyuters.length === 0 ? (
           <div className="text-gray-500">Нет данных</div>
         ) : (
@@ -522,6 +531,34 @@ export default function ComputerTable({
             padding: '10px',
             color: 'black',
           }}
+        />
+        <Column
+          field="changes"
+          header="Изменение"
+          headerStyle={{
+            fontWeight: 'bold',
+            border: '1px solid #c8c5c4',
+            textAlign: 'center',
+            padding: '10px',
+            color: 'black',
+          }}
+          body={(rowData) => (
+            <div
+              style={{
+                whiteSpace: 'pre-line',
+                fontSize: '0.7rem',
+                fontWeight: 'bold',
+              }}
+            >
+              {rowData.changes && rowData.changes.length ? (
+                rowData.changes.map((line: string, i: number) => (
+                  <div key={i}>{line}</div>
+                ))
+              ) : (
+                <span>—</span>
+              )}
+            </div>
+          )}
         />
         <Column
           field="isActive"
