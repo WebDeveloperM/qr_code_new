@@ -2,6 +2,7 @@
 from rest_framework import serializers
 from .models import *
 import re
+from django.utils.formats import date_format
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -232,6 +233,7 @@ class ProgramSerializer(serializers.ModelSerializer):
 
 
 class CompyuterSerializer(serializers.ModelSerializer):
+    changes = serializers.SerializerMethodField()
     departament = DepartmentSerializer()  # Use nested serializer
     section = SectionSerializer()  # Use nested serializer
     warehouse_manager = WarehouseManagerSerializer()  # Use nested serializer
@@ -280,6 +282,30 @@ class CompyuterSerializer(serializers.ModelSerializer):
         ).data
 
         return data
+
+    def get_changes(self, obj):
+        histories = obj.history.order_by('history_date')
+
+        target = None
+        for rec in histories:
+            if rec.history_user and rec.history_user.username != 'admin':
+                target = rec
+
+        if not target:
+            return []
+
+        date_str = date_format(
+            target.history_date,
+            format='d E Y г. H:i',
+            use_l10n=True
+        )
+
+        user = target.history_user.username
+
+        return [
+            f"Дата/время: {date_str}",
+            f"Изменено: {user}",
+        ]
 
     class Meta:
         model = Compyuter
